@@ -65,7 +65,14 @@ extract_natives() {
 
 main() {
   detect_platform
-  classifier="${OS}-${ARCH}"
+  
+  # 修复：针对 x86_64 架构，LWJGL 的 natives jar 通常不带架构后缀
+  if [ "$ARCH" = "x86_64" ]; then
+    classifier="${OS}"
+  else
+    classifier="${OS}-${ARCH}"
+  fi
+
   mkdir -p "$LIB_DIR"
   for m in "" "-glfw" "-opengl"; do
     download_module "$m" "$classifier"
