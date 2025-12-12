@@ -1,5 +1,8 @@
 package com.gameengine.recording;
 
+import com.gameengine.components.PhysicsComponent;
+import com.gameengine.components.RenderComponent;
+import com.gameengine.math.Vector2;
 import com.gameengine.components.TransformComponent;
 import com.gameengine.core.GameObject;
 import com.gameengine.input.InputManager;
@@ -21,7 +24,7 @@ public class RecordingService {
     private double elapsed;
     private double keyframeElapsed;
     private double sampleAccumulator;
-    private final double warmupSec = 0.1; // 等待一帧让场景对象完成初始化
+    private final double warmupSeconds = 0.1; // 等待一帧让场景对象完成初始化
     private final DecimalFormat qfmt;
     private Scene lastScene;
 
@@ -42,14 +45,18 @@ public class RecordingService {
     }
 
     public void start(Scene scene, int width, int height) throws IOException {
-        if (recording) return;
+        if (recording)
+            return;
         storage.openWriter(config.outputPath);
         writerThread = new Thread(() -> {
             try {
                 while (recording || !lineQueue.isEmpty()) {
                     String s = lineQueue.poll();
                     if (s == null) {
-                        try { Thread.sleep(2); } catch (InterruptedException ignored) {}
+                        try {
+                            Thread.sleep(2);
+                        } catch (InterruptedException ignored) {
+                        }
                         continue;
                     }
                     storage.writeLine(s);
@@ -57,7 +64,10 @@ public class RecordingService {
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
-                try { storage.closeWriter(); } catch (Exception ignored) {}
+                try {
+                    storage.closeWriter();
+                } catch (Exception ignored) {
+                }
             }
         }, "record-writer");
         recording = true;
@@ -69,31 +79,38 @@ public class RecordingService {
     }
 
     public void stop() {
-        if (!recording) return;
+        if (!recording)
+            return;
         try {
             if (lastScene != null) {
                 writeKeyframe(lastScene);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         recording = false;
-        try { writerThread.join(500); } catch (InterruptedException ignored) {}
+        try {
+            writerThread.join(500);
+        } catch (InterruptedException ignored) {
+        }
     }
 
     public void update(double deltaTime, Scene scene, InputManager input) {
-        if (!recording) return;
+        if (!recording)
+            return;
         elapsed += deltaTime;
         keyframeElapsed += deltaTime;
         sampleAccumulator += deltaTime;
         lastScene = scene;
 
-        // input events (sample at native frequency, but只写有justPressed)
-        Set<Integer> just = input.getJustPressedKeysSnapshot();
+        // input events (sampled at native frequency, but only write justPressed events)
+        Set<Integer> just = input.getPressedKeysSnapshot();
         if (!just.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             sb.append("{\"type\":\"input\",\"t\":").append(qfmt.format(elapsed)).append(",\"keys\":[");
             boolean first = true;
             for (Integer k : just) {
-                if (!first) sb.append(',');
+                if (!first)
+                    sb.append(',');
                 sb.append(k);
                 first = false;
             }
@@ -101,10 +118,11 @@ public class RecordingService {
             enqueue(sb.toString());
         }
 
-        // sampled deltas placeholder（可扩展）：此处先跳过，保持最小版本
+        // sampled deltas placeholder (extensible): skip for now to maintain minimal
+        // version
 
-        // periodic keyframe（跳过开头暖机，避免空关键帧）
-        if (elapsed >= warmupSec && keyframeElapsed >= config.keyframeIntervalSec) {
+        // periodic keyframe (skip warmup period to avoid empty keyframes)
+        if (elapsed >= warmupSeconds && keyframeElapsed >= config.keyframeIntervalSec) {
             if (writeKeyframe(scene)) {
                 keyframeElapsed = 0.0;
             }
@@ -119,33 +137,45 @@ public class RecordingService {
         int count = 0;
         for (GameObject obj : objs) {
             TransformComponent tc = obj.getComponent(TransformComponent.class);
-            if (tc == null) continue;
+            if (tc == null)
+                continue;
             float x = tc.getPosition().x;
             float y = tc.getPosition().y;
-            if (!first) sb.append(',');
+            if (!first)
+                sb.append(',');
             sb.append('{')
-              .append("\"id\":\"").append(obj.getName()).append("\",")
-              .append("\"x\":").append(qfmt.format(x)).append(',')
-              .append("\"y\":").append(qfmt.format(y));
+                    .append("\"id\":\"").append(obj.getName()).append("\",")
+                    .append("\"x\":").append(qfmt.format(x)).append(',')
+                    .append("\"y\":").append(qfmt.format(y));
 
-            // 可选渲染信息（若对象带有 RenderComponent，则记录形状、尺寸、颜色）
-            com.gameengine.components.RenderComponent rc = obj.getComponent(com.gameengine.components.RenderComponent.class);
+            // Optional render info (if object has RenderComponent, record shape, size,
+            // color)
+            RenderComponent rc = obj.getComponent(RenderComponent.class);
             if (rc != null) {
-                com.gameengine.components.RenderComponent.RenderType rt = rc.getRenderType();
-                com.gameengine.math.Vector2 sz = rc.getSize();
-                com.gameengine.components.RenderComponent.Color col = rc.getColor();
+                RenderComponent.RenderType rt = rc.getRenderType();
+                Vector2 sz = rc.getSize();
+                RenderComponent.Color col = rc.getColor();
                 sb.append(',')
-                  .append("\"rt\":\"").append(rt.name()).append("\",")
-                  .append("\"w\":").append(qfmt.format(sz.x)).append(',')
-                  .append("\"h\":").append(qfmt.format(sz.y)).append(',')
-                  .append("\"color\":[")
-                  .append(qfmt.format(col.r)).append(',')
-                  .append(qfmt.format(col.g)).append(',')
-                  .append(qfmt.format(col.b)).append(',')
-                  .append(qfmt.format(col.a)).append(']');
+                        .append("\"rt\":\"").append(rt.name()).append("\",")
+                        .append("\"w\":").append(qfmt.format(sz.x)).append(',')
+                        .append("\"h\":").append(qfmt.format(sz.y)).append(',')
+                        .append("\"color\":[")
+                        .append(qfmt.format(col.r)).append(',')
+                        .append(qfmt.format(col.g)).append(',')
+                        .append(qfmt.format(col.b)).append(',')
+                        .append(qfmt.format(col.a)).append(']');
             } else {
-                // 标记自定义渲染（如 Player），方便回放做近似还原
+                // Mark custom rendering (e.g., Player) to facilitate approximate restoration
+                // during playback
                 sb.append(',').append("\"rt\":\"CUSTOM\"");
+            }
+
+            PhysicsComponent pc = obj.getComponent(PhysicsComponent.class);
+            if(pc != null)
+            {
+                sb.append(',')
+                    .append("\"vx\":").append(pc.getVelocity().x).append(",")
+                    .append("\"vy\":").append(pc.getVelocity().y);
             }
 
             sb.append('}');
@@ -153,16 +183,16 @@ public class RecordingService {
             count++;
         }
         sb.append("]}");
-        if (count == 0) return false;
+        if (count == 0)
+            return false;
         enqueue(sb.toString());
         return true;
     }
 
     private void enqueue(String line) {
         if (!lineQueue.offer(line)) {
-            // 简单丢弃策略：队列满时丢弃低优先级数据（此处直接丢弃）
+            // Simple discard strategy: drop low-priority data when queue is full (directly
+            // discard here)
         }
     }
 }
-
-

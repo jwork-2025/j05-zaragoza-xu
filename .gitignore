@@ -103,3 +103,4 @@ mvnw.cmd
 
 # 其他
 *.orig
+.gradle/

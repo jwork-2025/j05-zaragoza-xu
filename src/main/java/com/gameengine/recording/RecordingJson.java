@@ -35,7 +35,8 @@ public final class RecordingJson {
 
     public static String[] splitTopLevel(String arr) {
         List<String> out = new ArrayList<>();
-        int depth = 0; int start = 0;
+        int depth = 0; 
+        int start = 0;
         for (int i = 0; i < arr.length(); i++) {
             char ch = arr.charAt(i);
             if (ch == '{') depth++;

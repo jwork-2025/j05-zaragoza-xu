@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.gameengine'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21) // 使用 JDK 21
+    }
+}
+
+application {
+    // 主类（调整为你的入口类）
+    mainClass = 'com.gameengine.example.GameExample'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    // 下面两项在使用 toolchain 时不是必须，但保留以明确来源/目标兼容
+    sourceCompatibility = '21'
+    targetCompatibility = '21'
+}
+
+// 可选：生成可执行的 fat JAR（如果需要把所有依赖打包到一个jar）
+jar {
+    manifest {
+        attributes(
+            'Main-Class': application.mainClass
+        )
+    }
+}

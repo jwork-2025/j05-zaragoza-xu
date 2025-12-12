@@ -1,7 +1,8 @@
 package com.gameengine.example;
 
+import com.gameengine.config.GameConfig;
 import com.gameengine.core.GameEngine;
-import com.gameengine.graphics.IRenderer;
+import com.gameengine.graphics.Renderer;
 import com.gameengine.input.InputManager;
 import com.gameengine.math.Vector2;
 import com.gameengine.scene.Scene;
@@ -20,7 +21,7 @@ public class MenuScene extends Scene {
         EXIT
     }
     
-    private IRenderer renderer;
+    private Renderer renderer;
     private InputManager inputManager;
     private GameEngine engine;
     private int selectedIndex;
@@ -31,8 +32,8 @@ public class MenuScene extends Scene {
     private boolean showReplayInfo;
     private int debugFrames;
     
-    public MenuScene(GameEngine engine, String name) {
-        super(name);
+    public MenuScene(GameEngine engine) {
+        super("MenuScene");
         this.engine = engine;
         this.renderer = engine.getRenderer();
         this.inputManager = InputManager.getInstance();
@@ -81,8 +82,7 @@ public class MenuScene extends Scene {
                 Scene replay = new ReplayScene(engine, null);
                 engine.setScene(replay);
             } else if (selectedOption == MenuOption.EXIT) {
-                engine.stop();
-                engine.cleanup();
+                engine.exit();
                 System.exit(0);
             }
         }
@@ -108,8 +108,7 @@ public class MenuScene extends Scene {
                 selectedIndex = 2;
                 selectionMade = true;
                 selectedOption = MenuOption.EXIT;
-                engine.stop();
-                engine.cleanup();
+                engine.exit();
                 System.exit(0);
             }
         }
@@ -166,20 +165,17 @@ public class MenuScene extends Scene {
     
     private void renderMainMenu() {
         if (renderer == null) return;
+
+        float centerX = GameConfig.WIDTH / 2.0f;
+        float centerY = GameConfig.HEIGHT / 2.0f;
         
-        int width = renderer.getWidth();
-        int height = renderer.getHeight();
-        
-        float centerX = width / 2.0f;
-        float centerY = height / 2.0f;
-        
-        String title = "GAME ENGINE";
+        String title = "GAME";
         float titleWidth = title.length() * 20.0f;
-        float titleX = centerX - titleWidth / 2.0f;
+        float titleX = centerX;
         float titleY = 120.0f;
         
-        renderer.drawRect(centerX - titleWidth / 2.0f - 20, titleY - 40, titleWidth + 40, 80, 0.4f, 0.4f, 0.5f, 1.0f);
-        renderer.drawText(titleX, titleY, title, 1.0f, 1.0f, 1.0f, 1.0f);
+        renderer.drawRect(titleX - titleWidth - 40, titleY - 40, titleWidth * 2 + 80, 80, 0.4f, 0.4f, 0.5f, 1.0f);
+        renderer.drawText(titleX, titleY, title, 60, 1.0f, 1.0f, 1.0f, 1.0f);
         
         for (int i = 0; i < options.length; i++) {
             String text = "";
@@ -191,8 +187,8 @@ public class MenuScene extends Scene {
                 text = "EXIT";
             }
             
-            float textWidth = text.length() * 20.0f;
-            float textX = centerX - textWidth / 2.0f;
+            float textWidth = text.length() * 18.0f;
+            float textX = centerX;
             float textY = centerY - 80.0f + i * 80.0f;
             
             float r, g, b;
@@ -201,31 +197,28 @@ public class MenuScene extends Scene {
                 r = 1.0f;
                 g = 1.0f;
                 b = 0.5f;
-                renderer.drawRect(textX - 20, textY - 20, textWidth + 40, 50, 0.6f, 0.5f, 0.2f, 0.9f);
+                renderer.drawRect(textX - textWidth - 20, textY - 30, textWidth * 2 + 40, 60, 0.6f, 0.5f, 0.2f, 0.9f);
             } else {
                 r = 0.95f;
                 g = 0.95f;
                 b = 0.95f;
-                renderer.drawRect(textX - 20, textY - 20, textWidth + 40, 50, 0.2f, 0.2f, 0.3f, 0.5f);
+                renderer.drawRect(textX - textWidth - 20, textY - 30, textWidth * 2 + 40, 60, 0.2f, 0.2f, 0.3f, 0.5f);
             }
             
-            renderer.drawText(textX, textY, text, r, g, b, 1.0f);
+            renderer.drawText(textX, textY, text, 40, r, g, b, 1.0f);
         }
         
         String hint1 = "USE ARROWS OR MOUSE TO SELECT, ENTER TO CONFIRM";
-        float hint1Width = hint1.length() * 20.0f;
-        float hint1X = centerX - hint1Width / 2.0f;
-        renderer.drawText(hint1X, height - 100, hint1, 0.6f, 0.6f, 0.6f, 1.0f);
+        float hint1X = centerX;
+        renderer.drawText(hint1X, GameConfig.HEIGHT - 100, hint1, 20, 0.6f, 0.6f, 0.6f, 1.0f);
         
         String hint2 = "ESC TO EXIT";
-        float hint2Width = hint2.length() * 20.0f;
-        float hint2X = centerX - hint2Width / 2.0f;
-        renderer.drawText(hint2X, height - 70, hint2, 0.6f, 0.6f, 0.6f, 1.0f);
+        float hint2X = centerX;
+        renderer.drawText(hint2X, GameConfig.HEIGHT - 70, hint2, 20, 0.6f, 0.6f, 0.6f, 1.0f);
 
         if (showReplayInfo) {
             String info = "REPLAY COMING SOON";
-            float w = info.length() * 20.0f;
-            renderer.drawText(centerX - w / 2.0f, height - 140, info, 0.9f, 0.8f, 0.2f, 1.0f);
+            renderer.drawText(centerX, GameConfig.HEIGHT - 140, info, 20, 0.9f, 0.8f, 0.2f, 1.0f);
         }
     }
     

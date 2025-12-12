@@ -1,28 +1,32 @@
 package com.gameengine.example;
 
 import com.gameengine.core.GameEngine;
-import com.gameengine.graphics.RenderBackend;
+import com.gameengine.scene.Scene;
+import com.gameengine.config.GameConfig;
 
-public class Game {
+/**
+ * 游戏示例
+ */
+public class GameExample {
     public static void main(String[] args) {
         System.out.println("启动游戏引擎...");
 
-        GameEngine engine = null;
         try {
-            System.out.println("使用渲染后端: GPU");
-            engine = new GameEngine(1024, 768, "游戏引擎", RenderBackend.GPU);
+            // 创建游戏引擎
+            GameEngine engine = new GameEngine(GameConfig.WIDTH, GameConfig.HEIGHT, "My Game");
 
-            MenuScene menuScene = new MenuScene(engine, "MainMenu");
+            // 创建游戏场景
+            Scene menuScene = new MenuScene(engine);
+            // 设置场景
             engine.setScene(menuScene);
+
+            // 运行游戏
             engine.run();
+
         } catch (Exception e) {
             System.err.println("游戏运行出错: " + e.getMessage());
             e.printStackTrace();
-        } finally {
         }
 
-        System.out.println("游戏结束");
     }
 }
-
-
